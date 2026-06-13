@@ -1,0 +1,36 @@
+import { _decorator, Component, Collider2D, Contact2DType, IPhysics2DContact } from "cc";
+import { GameEvent, GameEvents } from "../Event/GameEvents";
+
+const { ccclass } = _decorator;
+
+/**
+ * 死亡线组件
+ * 挂在顶部边界碰撞体上，检测水果是否超出游戏区域上限。
+ * 一旦触发，发送 GAME_OVER 事件。
+ */
+@ccclass("DeathLine")
+export class DeathLine extends Component {
+  protected onLoad(): void {
+    this.registerCollision();
+  }
+
+  /** 注册碰撞回调 */
+  private registerCollision(): void {
+    const collider = this.getComponent(Collider2D);
+    if (!collider) return;
+
+    collider.on(Contact2DType.BEGIN_CONTACT, this.onContact, this);
+  }
+
+  /** 有物体碰到死亡线 → 游戏结束 */
+  private onContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
+    GameEvents.emit(GameEvent.GAME_OVER);
+  }
+
+  protected onDestroy(): void {
+    const collider = this.getComponent(Collider2D);
+    if (collider) {
+      collider.off(Contact2DType.BEGIN_CONTACT, this.onContact, this);
+    }
+  }
+}

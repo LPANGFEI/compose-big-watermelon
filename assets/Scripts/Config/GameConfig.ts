@@ -1,42 +1,49 @@
-import { Vec2 } from "cc";
-
-// Config 层: 把项目里所有硬编码数字和常量集中到一个文件
-// 好处: 改一个数值不用搜遍全项目, 初学者一看就知道有哪些可调参数
+/**
+ * 游戏全局常量配置
+ * 所有可调参数集中管理，改数值不用搜遍全项目
+ */
 export const GameConfig = {
-  // 每隔多少秒生成一个工作标签
+  /** 水果生成间隔（秒） */
   SPAWN_INTERVAL: 0.5,
-  // 标签生成时的 Y 坐标 (屏幕顶部)
+
+  /** 水果生成 Y 坐标（屏幕顶部） */
   SPAWN_POSITION_Y: 670,
+
+  /** 水果生成 X 坐标范围 */
   SPAWN_POSITION_X_MIN: -320,
   SPAWN_POSITION_X_MAX: 320,
 
-  // 篮子拖拽时的边界限制, 防止拖出屏幕
-  BASKET_BOUNDARY: {
-    min: new Vec2(-260, -200),
-    max: new Vec2(260, 300),
+  /** 游戏区域边界（防止水果拖出屏幕） */
+  GAME_AREA_BOUNDARY: {
+    minX: -260,
+    maxX: 260,
+    minY: -200,
+    maxY: 300,
   },
 
-  // 游戏结束动画参数 (BasketController.playEnding)
-  ENDING_TWEEN: {
-    LABEL_DURATION: 1,
-    LABEL_END_Y: 100,
-    BASKET_DURATION: 2,
-    BASKET_END_Y: 170,
-  },
+  /** 死亡线 Y 坐标 —— 水果超过此线则游戏结束 */
+  DEATH_LINE_Y: -400,
 
-  // 所有职业名称, SpawnManager 从这里读数据生成标签
-  WORK_NAMES: [
-    "董事长",
-    "网红",
-    "程序员",
-    "保安",
-    "外卖员",
-    "快递员",
-    "保洁员",
-    "暴发户",
-    "拆迁户",
-    "公务员",
-    "三和大神",
-    "吃软饭",
+  /**
+   * 水果类型配置
+   * level: 等级（数字越大越高级，两个同级水果合成升一级）
+   * name:  显示名称
+   * score: 合成该等级水果获得的分数
+   * radius: 碰撞半径
+   */
+  FRUIT_TYPES: [
+    { level: 0, name: "樱桃", score: 1, radius: 25 },
+    { level: 1, name: "草莓", score: 2, radius: 30 },
+    { level: 2, name: "葡萄", score: 4, radius: 38 },
+    { level: 3, name: "橘子", score: 8, radius: 46 },
+    { level: 4, name: "苹果", score: 16, radius: 54 },
+    { level: 5, name: "梨",   score: 32, radius: 62 },
+    { level: 6, name: "桃子", score: 64, radius: 70 },
+    { level: 7, name: "菠萝", score: 128, radius: 78 },
+    { level: 8, name: "哈密瓜", score: 256, radius: 86 },
+    { level: 9, name: "西瓜", score: 512, radius: 94 },
   ],
+
+  /** 最高等级（合成到西瓜即为最终） */
+  MAX_LEVEL: 9,
 };

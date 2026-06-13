@@ -2728,11 +2728,7 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "gameScene": {
-      "__uuid__": "7f999922-ba79-4955-ac20-ec1a49ae1a80",
-      "__expectedType__": "cc.SceneAsset"
-    },
-    "bestScore": {
+    "bestScoreLabel": {
       "__id__": 50
     },
     "_id": "72cCIblX9GPISLvIG9JE0/"
