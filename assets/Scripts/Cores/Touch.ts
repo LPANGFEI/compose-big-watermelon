@@ -1,14 +1,9 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, CCInteger, Component, Node } from "cc";
 const { ccclass, property } = _decorator;
 
-@ccclass('Touch')
+@ccclass("Touch")
 export class Touch extends Component {
-    start() {
+  start() {}
 
-    }
-
-    update(deltaTime: number) {
-        
-    }
+  update(deltaTime: number) {}
 }
-

@@ -1,14 +1,30 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, CCInteger, Component, Node, Prefab } from "cc";
 const { ccclass, property } = _decorator;
 
-@ccclass('GameManager')
+@ccclass("GameManager")
 export class GameManager extends Component {
-    start() {
+  @property({
+    type: CCInteger,
+    tooltip: "定时器",
+  })
+  timer: number = 1;
 
-    }
+  @property({
+    type: Prefab,
+    tooltip: "水果预制体",
+  })
+  fruitPrefab: Prefab = null;
 
-    update(deltaTime: number) {
-        
-    }
+  @property({
+    type: Node,
+    tooltip: "引导线节点",
+  })
+  guideLineNode: Node = null;
+
+  // 是否可以生成
+  isCanSpawn: boolean = true;
+
+  start() {}
+
+  update(deltaTime: number) {}
 }
-
