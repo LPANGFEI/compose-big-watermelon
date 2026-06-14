@@ -30,7 +30,6 @@ assets/
     │   ├── FruitManager.ts   # 水果生成/合成
     │   ├── ScoreManager.ts   # 分数 + 持久化
     │   └── TouchManager.ts   # 触摸收口
-    ├── Components/   # 通用组件 (Touch.ts)
     ├── Gameplay/     # 游戏实体 (Fruit.ts, DeathLine.ts)
     └── UI/           # 页面 UI (HomePage.ts, GamePage.ts)
 ```

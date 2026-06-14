@@ -18,15 +18,15 @@ export class GamePage extends Component {
   gameOverPanel: Node = null;
 
   protected onLoad(): void {
-    // 监听分数更新
-    GameEvents.on(GameEvent.SCORE_UPDATED, this.onScoreUpdated, this);
-    // 监听游戏结束
-    GameEvents.on(GameEvent.GAME_OVER, this.onGameOver, this);
-
     // 初始化隐藏结束弹窗
     if (this.gameOverPanel) {
       this.gameOverPanel.active = false;
     }
+
+    // 监听分数更新
+    GameEvents.on(GameEvent.SCORE_UPDATED, this.onScoreUpdated, this);
+    // 监听游戏结束
+    GameEvents.on(GameEvent.GAME_OVER, this.onGameOver, this);
   }
 
   protected onDestroy(): void {

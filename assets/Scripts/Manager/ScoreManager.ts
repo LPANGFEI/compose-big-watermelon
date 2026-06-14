@@ -1,6 +1,7 @@
 import { _decorator, Component, sys } from "cc";
-import { GameEvent, GameEvents } from "../Event/GameEvents";
+import { Fruit } from "../Gameplay/Fruit";
 import { GameConfig } from "../Config/GameConfig";
+import { GameEvent, GameEvents } from "../Event/GameEvents";
 
 const { ccclass } = _decorator;
 
@@ -50,7 +51,7 @@ export class ScoreManager extends Component {
   }
 
   /** 水果合成时加分 —— 按新等级对应的分数加分 */
-  private onFruitMerge(fruitA: any, _fruitB: any): void {
+  private onFruitMerge(fruitA: Fruit, _fruitB: Fruit): void {
     // fruitA.level 已被 FruitManager.onFruitMerge 中 upgradeLevel() 升级为新等级
     const newLevel = fruitA.level;
     if (newLevel <= GameConfig.MAX_LEVEL) {
