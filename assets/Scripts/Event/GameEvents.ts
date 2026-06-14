@@ -47,9 +47,6 @@ export enum GameEvent {
 
   // ========== 水果逻辑 ==========
 
-  /** 水果落到地面 */
-  FRUIT_DROP = "FRUIT_DROP",
-
   /** 两个同等级水果合成 */
   FRUIT_MERGE = "FRUIT_MERGE",
 
@@ -57,4 +54,9 @@ export enum GameEvent {
 
   /** 分数更新 */
   SCORE_UPDATED = "SCORE_UPDATED",
+
+  // ========== 预览 ==========
+
+  /** 下一个水果等级更新 */
+  NEXT_FRUIT_LEVEL = "NEXT_FRUIT_LEVEL",
 }

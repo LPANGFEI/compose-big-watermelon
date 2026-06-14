@@ -1,3 +1,5 @@
+import { GameConfig } from "../Config/GameConfig";
+import { GameEvent, GameEvents } from "../Event/GameEvents";
 import {
   _decorator,
   Collider2D,
@@ -5,8 +7,6 @@ import {
   Contact2DType,
   IPhysics2DContact,
 } from "cc";
-import { GameConfig } from "../Config/GameConfig";
-import { GameEvent, GameEvents } from "../Event/GameEvents";
 
 const { ccclass, property } = _decorator;
 
@@ -19,9 +19,6 @@ export class Fruit extends Component {
   /** 水果等级（0=樱桃, 9=西瓜） */
   @property({ tooltip: "水果等级（0-9）" })
   level: number = 0;
-
-  /** 是否已落地（落地后不再响应拖拽） */
-  private hasLanded: boolean = false;
 
   /** 是否正在合成中（防止重复合成） */
   private isMerging: boolean = false;
@@ -38,7 +35,7 @@ export class Fruit extends Component {
     collider.on(Contact2DType.BEGIN_CONTACT, this.onCollisionEnter, this);
   }
 
-  /** 碰撞进入回调 —— 检测到同等级水果则触发合成 */
+  /** 水果碰撞事件 */
   private onCollisionEnter(
     selfCollider: Collider2D,
     otherCollider: Collider2D,
@@ -50,7 +47,6 @@ export class Fruit extends Component {
     if (!otherFruit) return;
     if (otherFruit.isMerging) return;
 
-    // 同等级且未满级才能合成
     if (this.level === otherFruit.level && this.level < GameConfig.MAX_LEVEL) {
       this.isMerging = true;
       otherFruit.isMerging = true;
@@ -59,29 +55,19 @@ export class Fruit extends Component {
     }
   }
 
-  /** 标记水果已落地 */
-  markAsLanded(): void {
-    this.hasLanded = true;
-    GameEvents.emit(GameEvent.FRUIT_DROP, this);
-  }
-
-  /** 获取当前等级对应的配置 */
+  /** 获取水果配置 */
   getFruitConfig(): (typeof GameConfig.FRUIT_TYPES)[number] {
     return GameConfig.FRUIT_TYPES[this.level];
   }
 
-  /** 升级到下一等级水果 */
+  /** 升级水果等级 */
   upgradeLevel(): void {
     if (this.level < GameConfig.MAX_LEVEL) {
       this.level++;
     }
   }
 
-  /** 是否已落地 */
-  get hasLandedFruit(): boolean {
-    return this.hasLanded;
-  }
-
+  /** 销毁时移除碰撞回调 */
   protected onDestroy(): void {
     const collider = this.getComponent(Collider2D);
     if (collider) {

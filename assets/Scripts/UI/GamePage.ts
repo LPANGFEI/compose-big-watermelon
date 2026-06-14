@@ -1,13 +1,17 @@
-import { _decorator, Component, Label, Node } from "cc";
+import { _decorator, Component, Label, Node, Sprite, SpriteAtlas } from "cc";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
 
 const { ccclass, property } = _decorator;
 
 /**
- * 游戏页 UI 组件
+ * 游戏页 UI 组件。
  *
- * 职责：只做 UI 绑定和按钮事件转发。
- * 分数刷新监听 SCORE_UPDATED 事件，按钮点击 emit 对应事件给 Manager 处理。
+ * 职责：绑定分数显示、游戏结束弹窗、下一个水果预览（Slice）。
+ * 数据通过 GameEvents 事件获取，不直接 import Manager。
+ *
+ * 场景中需手动绑定：
+ *   - slicePreviewSprite → Slice 子节点的 Sprite
+ *   - fruitAtlas → assets/Art/watermelon/watermelon.plist
  */
 @ccclass("GamePage")
 export class GamePage extends Component {
@@ -17,21 +21,26 @@ export class GamePage extends Component {
   @property({ type: Node, tooltip: "游戏结束弹窗节点" })
   gameOverPanel: Node = null;
 
+  @property({ type: Sprite, tooltip: "下一个水果预览 Sprite（Slice 子节点）" })
+  slicePreviewSprite: Sprite = null;
+
+  @property({ type: SpriteAtlas, tooltip: "水果精灵图集" })
+  fruitAtlas: SpriteAtlas = null;
+
   protected onLoad(): void {
-    // 初始化隐藏结束弹窗
+    GameEvents.on(GameEvent.SCORE_UPDATED, this.onScoreUpdated, this);
+    GameEvents.on(GameEvent.GAME_OVER, this.onGameOver, this);
+    GameEvents.on(GameEvent.NEXT_FRUIT_LEVEL, this.onNextFruitLevel, this);
+
     if (this.gameOverPanel) {
       this.gameOverPanel.active = false;
     }
-
-    // 监听分数更新
-    GameEvents.on(GameEvent.SCORE_UPDATED, this.onScoreUpdated, this);
-    // 监听游戏结束
-    GameEvents.on(GameEvent.GAME_OVER, this.onGameOver, this);
   }
 
   protected onDestroy(): void {
     GameEvents.off(GameEvent.SCORE_UPDATED, this.onScoreUpdated, this);
     GameEvents.off(GameEvent.GAME_OVER, this.onGameOver, this);
+    GameEvents.off(GameEvent.NEXT_FRUIT_LEVEL, this.onNextFruitLevel, this);
   }
 
   /** 分数更新 → 刷新 UI */
@@ -45,6 +54,16 @@ export class GamePage extends Component {
   private onGameOver(): void {
     if (this.gameOverPanel) {
       this.gameOverPanel.active = true;
+    }
+  }
+
+  /** 下一个水果等级更新时，更新预览 Sprite。 */
+  private onNextFruitLevel(level: number): void {
+    if (this.slicePreviewSprite && this.fruitAtlas) {
+      const spriteFrame = this.fruitAtlas.getSpriteFrame(level.toString());
+      if (spriteFrame) {
+        this.slicePreviewSprite.spriteFrame = spriteFrame;
+      }
     }
   }
 

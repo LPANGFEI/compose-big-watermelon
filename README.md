@@ -40,9 +40,14 @@ assets/
 **Manager 派架构** — 逻辑集中在 Manager 单例，通过事件总线通信。
 
 ```
-TouchManager → TOUCH_* → FruitManager
-Fruit.ts → FRUIT_MERGE → FruitManager + ScoreManager
+TouchManager → TOUCH_START/MOVE/END → FruitManager
+  TOUCH_START: 显示 GuideLine
+  TOUCH_MOVE:  GuideLine 跟随手指
+  TOUCH_END:   在 GuideLine 位置创建水果 → 预生成下一等级
+
+Fruit.ts → FRUIT_MERGE → FruitManager（升级 + 加分 + 重定位）
 DeathLine → GAME_OVER → GameManager + GamePage
+FruitManager → NEXT_FRUIT_LEVEL → GamePage（Slice 预览）
 ScoreManager → SCORE_UPDATED → HomePage / GamePage
 UI 按钮 → START_GAME / RESTART_GAME / RETURN_HOME → GameManager
 ```
@@ -51,4 +56,4 @@ UI 按钮 → START_GAME / RESTART_GAME / RETURN_HOME → GameManager
 - **纯 TS 单例**：GameManager / ScoreManager / TouchManager（无 Component 依赖，`init()` 幂等初始化）
 - **Component 单例**：FruitManager（需要编辑器绑定预制体和节点引用）
 
-**核心规则**：Gameplay / UI 层不 import Manager，只通过 GameEvents 事件通信。
+**核心规则**：Gameplay / UI 层不 import Manager，只通过 GameEvents 事件通信。Manager 之间不直接 import（**唯一例外**：FruitManager → ScoreManager 消除时序耦合）。

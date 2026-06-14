@@ -20,22 +20,11 @@ export const GameConfig = {
   SPAWN_POSITION_OFFSET: 200,
 
   /** 水果生成 Y 坐标备用值（当死亡线节点不存在时） */
-  SPAWN_POSITION_Y_FALLBACK: 300,
+  SPAWN_POSITION_Y_FALLBACK: 400,
 
   /** 水果生成 X 坐标范围 */
-  SPAWN_POSITION_X_MIN: -320,
-  SPAWN_POSITION_X_MAX: 320,
-
-  /** 游戏区域边界（防止水果拖出屏幕） */
-  GAME_AREA_BOUNDARY: {
-    minX: -260,
-    maxX: 260,
-    minY: -200,
-    maxY: 300,
-  },
-
-  /** 死亡线 Y 坐标 —— 水果超过此线则游戏结束 */
-  DEATH_LINE_Y: -400,
+  SPAWN_POSITION_X_MIN: -300,
+  SPAWN_POSITION_X_MAX: 300,
 
   /**
    * 水果类型配置

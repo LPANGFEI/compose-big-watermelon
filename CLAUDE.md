@@ -16,7 +16,9 @@
 | `Gameplay/` | Config, Event           | Manager      |
 | `UI/`       | Event                   | Manager      |
 
-Manager 之间通过 `GameEvents` 事件通信，不直接 import。
+> **例外**：FruitManager 可直接 `import { ScoreManager }` → `ScoreManager.instance.addScore()`。原因：消除 ScoreManager 监听 `FRUIT_MERGE` 事件带来的时序耦合（ScoreManager 的分数计算依赖 FruitManager 先执行 `upgradeLevel()`）。此例外仅限 FruitManager → ScoreManager 单向调用。
+
+Manager 之间除上述例外外通过 `GameEvents` 事件通信。
 
 ### Manager 目录结构
 
@@ -33,9 +35,14 @@ Manager/
 ### 数据流
 
 ```
-TouchManager → TOUCH_* → FruitManager
-Fruit.ts → FRUIT_MERGE → FruitManager + ScoreManager
+TouchManager → TOUCH_START/MOVE/END → FruitManager
+  TOUCH_START: 显示 GuideLine（无水果创建）
+  TOUCH_MOVE:  GuideLine 水平跟随手指
+  TOUCH_END:   在 GuideLine 位置创建水果（直接 Dynamic 下落）→ 隐藏 GuideLine → 预生成下一等级
+
+Fruit.ts → FRUIT_MERGE → FruitManager（执行 upgradeLevel + ScoreManager.instance.addScore + 重新定位）
 DeathLine → GAME_OVER → GameManager + GamePage
+FruitManager → NEXT_FRUIT_LEVEL → GamePage（更新 Slice 预览图）
 ScoreManager → SCORE_UPDATED → HomePage / GamePage
 UI 按钮 → START_GAME / RESTART_GAME / RETURN_HOME → GameManager
 ```

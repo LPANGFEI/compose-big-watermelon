@@ -1,6 +1,7 @@
 import { Fruit } from "../Gameplay/Fruit";
 import { GameConfig } from "../Config/GameConfig";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
+import { ScoreManager } from "./ScoreManager";
 import {
   _decorator,
   Component,
@@ -8,8 +9,6 @@ import {
   instantiate,
   Node,
   Prefab,
-  RigidBody2D,
-  ERigidBody2DType,
   UITransform,
   Vec3,
 } from "cc";
@@ -17,19 +16,19 @@ import {
 const { ccclass, property } = _decorator;
 
 /**
- * 水果管理器（Component 单例）
+ * 水果生成与合成管理器。
  *
- * 注意：此类为 Component 单例，依赖场景节点引用（@property），
- *       通过 Cocos 生命周期 onLoad 自初始化，不由 Boot.init() 管理。
+ * 触碰流程：
+ *   TOUCH_START → 显示 GuideLine（不创建水果）
+ *   TOUCH_MOVE  → GuideLine 水平跟随触摸
+ *   TOUCH_END   → 在 GuideLine 当前位置创建水果 → 隐藏 GuideLine → 预生成下一等级
  *
- * 职责：
- *   1. 触摸时生成待生成水果（跟随手指移动）
- *   2. 松手时释放水果（启用物理）
- *   3. 同步 GuideLine 引导线
- *   4. 处理水果合成（两个同等级 → 升级）
- *   5. 管理生成队列和冷却
+ *  水果出生即 RigidBody Dynamic，直接受重力下落。无"等待区"阶段。
  *
- * 挂在场景持久化节点上。
+ * 注意：FruitManager 打破了"Manager 之间不直接 import"的规则，
+ * 直接引用 ScoreManager.addScore()。原因：
+ *   避免 ScoreManager 通过事件监听 FRUIT_MERGE 带来的时序耦合
+ *   （ScoreManager 的分数计算依赖 FruitManager 先执行 upgradeLevel()）。
  */
 @ccclass("FruitManager")
 export class FruitManager extends Component {
@@ -44,17 +43,13 @@ export class FruitManager extends Component {
   @property({ type: Node, tooltip: "死亡线节点" })
   deathLineNode: Node = null;
 
-  @property({ type: Node, tooltip: "引导线节点（GuideLine）" })
-  guideLine: Node = null;
+  @property({ type: Node, tooltip: "引导线节点" })
+  guideLineNode: Node = null;
 
   /** 是否允许生成水果 */
   private canSpawn: boolean = true;
 
-  /** 当前待生成的水果节点（触摸中未松手） */
-  private pendingFruit: Node | null = null;
-
-  /** 待生成水果的刚体组件 */
-  private pendingRigidbody: RigidBody2D | null = null;
+  private nextFruitLevel: number = 0;
 
   protected onLoad(): void {
     FruitManager.instance = this;
@@ -65,9 +60,11 @@ export class FruitManager extends Component {
     GameEvents.on(GameEvent.FRUIT_MERGE, this.onFruitMerge, this);
     GameEvents.on(GameEvent.GAME_OVER, this.onGameOver, this);
 
-    if (this.guideLine) {
-      this.guideLine.active = false;
+    if (this.guideLineNode) {
+      this.guideLineNode.active = false;
     }
+
+    this.generateNextLevel();
   }
 
   protected onDestroy(): void {
@@ -77,109 +74,75 @@ export class FruitManager extends Component {
     GameEvents.off(GameEvent.FRUIT_MERGE, this.onFruitMerge, this);
     GameEvents.off(GameEvent.GAME_OVER, this.onGameOver, this);
     this.unschedule(this.onSpawnCooldownEnd);
-    this.cleanupPendingFruit();
+    this.hideGuideLine();
   }
 
   /** 触摸开始 → 创建待生成水果 & 显示引导线 */
   private onTouchStart(event: EventTouch): void {
     if (!this.canSpawn) return;
-    if (this.pendingFruit) return;
 
-    this.createPendingFruit(event);
+    const clampedX = this.clampTouchX(event);
+    this.showGuideLine(clampedX);
   }
 
   /** 触摸移动 → 待生成水果 + 引导线跟随手指 X 轴 */
   private onTouchMove(event: EventTouch): void {
-    if (!this.pendingFruit) return;
+    if (!this.guideLineNode || !this.guideLineNode.active) return;
 
     const clampedX = this.clampTouchX(event);
-
-    const fruitPos = this.pendingFruit.getPosition();
-    this.pendingFruit.setPosition(new Vec3(clampedX, fruitPos.y, fruitPos.z));
-
-    if (this.guideLine && this.guideLine.active) {
-      const guidePos = this.guideLine.getPosition();
-      this.guideLine.setPosition(new Vec3(clampedX, guidePos.y, guidePos.z));
-    }
+    const guidePos = this.guideLineNode.getPosition();
+    this.guideLineNode.setPosition(new Vec3(clampedX, guidePos.y, guidePos.z));
   }
 
-  /** 触摸结束 → 释放水果（启用物理），隐藏引导线 */
+  /** 触摸结束 → 在 GuideLine 当前位置创建水果 → 隐藏 GuideLine → 预生成下一等级 */
   private onTouchEnd(): void {
-    if (!this.pendingFruit) return;
+    if (!this.guideLineNode || !this.guideLineNode.active) return;
 
-    if (this.pendingRigidbody) {
-      this.pendingRigidbody.type = ERigidBody2DType.Dynamic;
-    }
-
-    if (this.guideLine) {
-      this.guideLine.active = false;
-    }
-
-    this.pendingFruit = null;
-    this.pendingRigidbody = null;
+    const guidePos = this.guideLineNode.getPosition();
+    this.spawnFruit(guidePos.x, guidePos.y);
+    this.hideGuideLine();
+    this.generateNextLevel();
 
     this.canSpawn = false;
     this.scheduleOnce(this.onSpawnCooldownEnd, GameConfig.SPAWN_INTERVAL);
   }
 
-  /** 创建待生成水果（Kinematic、无物理下落） */
-  private createPendingFruit(event: EventTouch): void {
+  /** 创建水果 */
+  private spawnFruit(x: number, y: number): void {
     if (!this.fruitPrefab) return;
 
-    const clampedX = this.clampTouchX(event);
-    const spawnY = this.calculateSpawnY();
-
-    const fruitNode = this.instantiateFruit(clampedX, spawnY);
-    this.configureRigidBody(fruitNode);
-    this.setRandomLevel(fruitNode);
-    this.showGuideLine(clampedX);
-
-    this.pendingFruit = fruitNode;
-  }
-
-  /** 计算生成 Y 坐标 */
-  private calculateSpawnY(): number {
-    return this.deathLineNode
-      ? this.deathLineNode.position.y - GameConfig.SPAWN_POSITION_OFFSET
-      : GameConfig.SPAWN_POSITION_Y_FALLBACK;
-  }
-
-  /** 实例化水果节点 */
-  private instantiateFruit(x: number, y: number): Node {
     const fruitNode = instantiate(this.fruitPrefab);
     fruitNode.parent = this.gameArea;
     fruitNode.setPosition(new Vec3(x, y, 0));
-    return fruitNode;
-  }
 
-  /** 配置刚体为 Kinematic */
-  private configureRigidBody(fruitNode: Node): void {
-    const rb = fruitNode.getComponent(RigidBody2D);
-    if (rb) {
-      rb.type = ERigidBody2DType.Kinematic;
-      this.pendingRigidbody = rb;
-    }
-  }
-
-  /** 设置随机等级（0-3 级） */
-  private setRandomLevel(fruitNode: Node): void {
-    const randomLevel = Math.floor(Math.random() * 4);
     const fruitComp = fruitNode.getComponent(Fruit);
     if (fruitComp) {
-      fruitComp.level = randomLevel;
+      fruitComp.level = this.nextFruitLevel;
     }
+  }
+
+  /** 预生成下一等级 */
+  private generateNextLevel(): void {
+    this.nextFruitLevel = Math.floor(Math.random() * 4);
+    GameEvents.emit(GameEvent.NEXT_FRUIT_LEVEL, this.nextFruitLevel);
   }
 
   /** 显示引导线 */
   private showGuideLine(x: number): void {
-    if (this.guideLine) {
-      this.guideLine.active = true;
-      const guidePos = this.guideLine.getPosition();
-      this.guideLine.setPosition(new Vec3(x, guidePos.y, guidePos.z));
+    if (this.guideLineNode) {
+      this.guideLineNode.active = true;
+      const guidePos = this.guideLineNode.getPosition();
+      this.guideLineNode.setPosition(new Vec3(x, guidePos.y, guidePos.z));
     }
   }
 
-  /** 将触摸事件 X 限制在游戏区边界内 */
+  /** 隐藏引导线 */
+  private hideGuideLine(): void {
+    if (this.guideLineNode) {
+      this.guideLineNode.active = false;
+    }
+  }
+
   private clampTouchX(event: EventTouch): number {
     const location = event.getLocation();
     const position = this.node
@@ -187,59 +150,49 @@ export class FruitManager extends Component {
       .convertToNodeSpaceAR(new Vec3(location.x, location.y, 0));
 
     return Math.max(
-      GameConfig.GAME_AREA_BOUNDARY.minX,
-      Math.min(GameConfig.GAME_AREA_BOUNDARY.maxX, position.x),
+      GameConfig.SPAWN_POSITION_X_MIN,
+      Math.min(GameConfig.SPAWN_POSITION_X_MAX, position.x),
     );
   }
 
-  /** 冷却结束 → 解锁生成 */
+  /** 生成冷却结束 → 允许生成水果 */
   private onSpawnCooldownEnd(): void {
     this.canSpawn = true;
   }
 
-  /** 清理待生成水果 */
-  private cleanupPendingFruit(): void {
-    if (this.pendingFruit) {
-      this.pendingFruit.destroy();
-      this.pendingFruit = null;
-      this.pendingRigidbody = null;
-    }
-    if (this.guideLine) {
-      this.guideLine.active = false;
-    }
-  }
-
-  /** 水果合成处理 */
+  /** 水果合并事件 */
   private onFruitMerge(fruitA: Fruit, fruitB: Fruit): void {
     const mergePosition = this.getMergePosition(fruitA, fruitB);
 
-    // 延迟销毁旧水果，避免在 Box2D 接触回调中操作刚体
     this.scheduleOnce(() => {
       fruitB.node.destroy();
     }, 0);
 
     fruitA.upgradeLevel();
+    const config = GameConfig.FRUIT_TYPES[fruitA.level];
+    ScoreManager.instance.addScore(config.score);
     fruitA.node.setPosition(mergePosition);
   }
 
-  /** 计算合成后的位置（两个水果的中点） */
+  /** 计算合并位置 */
   private getMergePosition(fruitA: Fruit, fruitB: Fruit): Vec3 {
     const posA = fruitA.node.getPosition();
     const posB = fruitB.node.getPosition();
     return new Vec3((posA.x + posB.x) / 2, Math.max(posA.y, posB.y), 0);
   }
 
-  /** 游戏结束 → 停止生成 */
+  /** 游戏结束 → 隐藏引导线 */
   private onGameOver(): void {
     this.canSpawn = false;
-    this.cleanupPendingFruit();
+    this.hideGuideLine();
   }
 
-  /** 重置状态（新一局开始时调用） */
+  /** 重置游戏状态 */
   reset(): void {
     this.unschedule(this.onSpawnCooldownEnd);
     this.canSpawn = true;
-    this.cleanupPendingFruit();
+    this.hideGuideLine();
+    this.generateNextLevel();
     const container = this.gameArea || this.node;
     const children = [...container.children];
     for (const child of children) {

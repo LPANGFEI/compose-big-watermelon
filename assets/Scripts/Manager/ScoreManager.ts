@@ -1,15 +1,13 @@
-import { Fruit } from "../Gameplay/Fruit";
+import { _decorator, sys } from "cc";
 import { GameConfig } from "../Config/GameConfig";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
-import { sys } from "cc";
 
 /**
- * 分数管理器（纯 TS 单例）
+ * 分数管理器。
  *
- * 职责：
- *   1. 管理当前游戏分数
- *   2. 读写最高分到 localStorage
- *   3. 通过事件通知 UI 更新
+ * 纯 TS 单例，在 Boot.onLoad() 中初始化。
+ * 管理当前分数和历史最高分，持久化到 localStorage。
+ * 分数增加由 FruitManager（在合成时）直接调用，不监听事件。
  */
 export class ScoreManager {
   static instance = new ScoreManager();
@@ -29,13 +27,11 @@ export class ScoreManager {
     this.initialized = true;
 
     this.loadBestScore();
-    GameEvents.on(GameEvent.FRUIT_MERGE, this.onFruitMerge, this);
     GameEvents.emit(GameEvent.SCORE_UPDATED, this.currentScore, this.bestScore);
   }
 
   /** 移除事件监听 */
   dispose(): void {
-    GameEvents.off(GameEvent.FRUIT_MERGE, this.onFruitMerge, this);
     this.initialized = false;
   }
 
@@ -51,16 +47,6 @@ export class ScoreManager {
       GameConfig.BEST_SCORE_KEY,
       this.bestScore.toString(),
     );
-  }
-
-  /** 水果合成时加分 —— 按新等级对应的分数加分 */
-  private onFruitMerge(fruitA: Fruit, _fruitB: Fruit): void {
-    // fruitA.level 已被 FruitManager.onFruitMerge 中 upgradeLevel() 升级为新等级
-    const newLevel = fruitA.level;
-    if (newLevel <= GameConfig.MAX_LEVEL) {
-      const config = GameConfig.FRUIT_TYPES[newLevel];
-      this.addScore(config.score);
-    }
   }
 
   /** 加分并检查最高分 */

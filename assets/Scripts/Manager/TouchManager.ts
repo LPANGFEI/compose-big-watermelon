@@ -16,6 +16,7 @@ export class TouchManager {
   /** 触摸是否启用 */
   private touchEnabled: boolean = true;
 
+  /** 是否已初始化 */
   private initialized = false;
 
   /** 初始化：注册全局触摸监听（幂等） */
@@ -33,32 +34,33 @@ export class TouchManager {
     input.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
     input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
     input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this);
+
     this.initialized = false;
   }
 
-  /** 启用触摸 */
+  /** 启用触摸 -- 暂时没用到 */
   enableTouch(): void {
     this.touchEnabled = true;
   }
 
-  /** 禁用触摸 */
+  /** 禁用触摸 -- 暂时没用到 */
   disableTouch(): void {
     this.touchEnabled = false;
   }
 
-  /** 原始触摸开始 —— 过滤后广播给业务层 */
+  /** 触摸开始 —— 过滤后广播给业务层 */
   private onTouchStart(event: EventTouch): void {
     if (!this.touchEnabled) return;
     GameEvents.emit(GameEvent.TOUCH_START, event);
   }
 
-  /** 原始触摸移动 */
+  /** 触摸移动 */
   private onTouchMove(event: EventTouch): void {
     if (!this.touchEnabled) return;
     GameEvents.emit(GameEvent.TOUCH_MOVE, event);
   }
 
-  /** 原始触摸结束 */
+  /** 触摸结束 */
   private onTouchEnd(event: EventTouch): void {
     if (!this.touchEnabled) return;
     GameEvents.emit(GameEvent.TOUCH_END, event);
