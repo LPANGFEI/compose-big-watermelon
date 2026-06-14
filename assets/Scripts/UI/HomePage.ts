@@ -27,12 +27,12 @@ export class HomePage extends Component {
   }
 
   /** 点击"开始游戏"按钮 */
-  onClickStart(): void {
+  onStartGame(): void {
     GameEvents.emit(GameEvent.START_GAME);
   }
 
   /** 点击"退出游戏"按钮 */
-  onClickExit(): void {
+  onExitGame(): void {
     // Cocos Creator 3.x 中 director.end() 已废弃，
     // Web 平台通过关闭标签页退出，原生平台通过平台 API
     if (typeof window !== "undefined") {

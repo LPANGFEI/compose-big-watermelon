@@ -3,11 +3,18 @@
  * 所有可调参数集中管理，改数值不用搜遍全项目
  */
 export const GameConfig = {
+  SCENE_NAME: {
+    /** 首页场景名 */
+    HOME_SCENE: "Home",
+    /** 游戏场景名 */
+    GAME_SCENE: "Game",
+  },
+
   /** 水果生成间隔（秒） */
-  SPAWN_INTERVAL: 0.5,
+  SPAWN_INTERVAL: 1,
 
   /** 水果生成 Y 坐标（屏幕顶部） */
-  SPAWN_POSITION_Y: 670,
+  SPAWN_POSITION_OFFSET: 200,
 
   /** 水果生成 X 坐标范围 */
   SPAWN_POSITION_X_MIN: -320,
@@ -37,7 +44,7 @@ export const GameConfig = {
     { level: 2, name: "葡萄", score: 4, radius: 38 },
     { level: 3, name: "橘子", score: 8, radius: 46 },
     { level: 4, name: "苹果", score: 16, radius: 54 },
-    { level: 5, name: "梨",   score: 32, radius: 62 },
+    { level: 5, name: "梨", score: 32, radius: 62 },
     { level: 6, name: "桃子", score: 64, radius: 70 },
     { level: 7, name: "菠萝", score: 128, radius: 78 },
     { level: 8, name: "哈密瓜", score: 256, radius: 86 },

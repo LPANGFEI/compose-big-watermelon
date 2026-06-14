@@ -1,4 +1,4 @@
-import { _decorator, Component, EventTouch } from "cc";
+import { _decorator, Component, EventTouch, Node } from "cc";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
 
 const { ccclass } = _decorator;
@@ -7,7 +7,7 @@ const { ccclass } = _decorator;
  * 触摸管理器（单例 Component）
  *
  * 职责：
- *   1. 收口所有触摸事件（由 Components/Touch.ts 发出）
+ *   1. 直接捕获 Canvas 上的原生触摸事件
  *   2. 统一控制触摸开关（暂停时禁用，继续时恢复）
  *   3. 向 GameManager / FruitManager 转发触摸数据
  *
@@ -22,13 +22,16 @@ export class TouchManager extends Component {
 
   protected onLoad(): void {
     TouchManager.instance = this;
+    // 节点已有 720×1280 的 UITransform，直接捕获自身触摸即可覆盖全屏
+    this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
+    this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
+    this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
   }
 
-  protected start(): void {
-    // 监听来自 Touch 组件的内部触摸事件（带 RAW_ 前缀，防循环）
-    GameEvents.on(GameEvent.RAW_TOUCH_START, this.onTouchStart, this);
-    GameEvents.on(GameEvent.RAW_TOUCH_MOVE,  this.onTouchMove,  this);
-    GameEvents.on(GameEvent.RAW_TOUCH_END,   this.onTouchEnd,   this);
+  protected onDestroy(): void {
+    this.node.off(Node.EventType.TOUCH_START, this.onTouchStart, this);
+    this.node.off(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
+    this.node.off(Node.EventType.TOUCH_END, this.onTouchEnd, this);
   }
 
   /** 启用触摸 */
@@ -41,27 +44,21 @@ export class TouchManager extends Component {
     this.touchEnabled = false;
   }
 
-  /** 触摸开始 —— 过滤后广播给业务层 */
+  /** 原始触摸开始 —— 过滤后广播给业务层 */
   private onTouchStart(event: EventTouch): void {
     if (!this.touchEnabled) return;
     GameEvents.emit(GameEvent.TOUCH_START, event);
   }
 
-  /** 触摸移动 */
+  /** 原始触摸移动 */
   private onTouchMove(event: EventTouch): void {
     if (!this.touchEnabled) return;
     GameEvents.emit(GameEvent.TOUCH_MOVE, event);
   }
 
-  /** 触摸结束 */
+  /** 原始触摸结束 */
   private onTouchEnd(event: EventTouch): void {
     if (!this.touchEnabled) return;
     GameEvents.emit(GameEvent.TOUCH_END, event);
-  }
-
-  protected onDestroy(): void {
-    GameEvents.off(GameEvent.RAW_TOUCH_START, this.onTouchStart, this);
-    GameEvents.off(GameEvent.RAW_TOUCH_MOVE,  this.onTouchMove,  this);
-    GameEvents.off(GameEvent.RAW_TOUCH_END,   this.onTouchEnd,   this);
   }
 }

@@ -14,9 +14,6 @@ export class GamePage extends Component {
   @property({ type: Label, tooltip: "当前分数显示" })
   scoreLabel: Label = null;
 
-  @property({ type: Label, tooltip: "最高分显示" })
-  bestScoreLabel: Label = null;
-
   @property({ type: Node, tooltip: "游戏结束弹窗节点" })
   gameOverPanel: Node = null;
 
@@ -32,13 +29,15 @@ export class GamePage extends Component {
     }
   }
 
+  protected onDestroy(): void {
+    GameEvents.off(GameEvent.SCORE_UPDATED, this.onScoreUpdated, this);
+    GameEvents.off(GameEvent.GAME_OVER, this.onGameOver, this);
+  }
+
   /** 分数更新 → 刷新 UI */
   private onScoreUpdated(currentScore: number, bestScore: number): void {
     if (this.scoreLabel) {
       this.scoreLabel.string = currentScore.toString();
-    }
-    if (this.bestScoreLabel) {
-      this.bestScoreLabel.string = bestScore.toString();
     }
   }
 
@@ -50,17 +49,12 @@ export class GamePage extends Component {
   }
 
   /** 点击"重新开始"按钮 */
-  onClickRestart(): void {
+  onRestart(): void {
     GameEvents.emit(GameEvent.RESTART_GAME);
   }
 
   /** 点击"返回首页"按钮 */
-  onClickReturnHome(): void {
+  onReturnHome(): void {
     GameEvents.emit(GameEvent.RETURN_HOME);
-  }
-
-  protected onDestroy(): void {
-    GameEvents.off(GameEvent.SCORE_UPDATED, this.onScoreUpdated, this);
-    GameEvents.off(GameEvent.GAME_OVER, this.onGameOver, this);
   }
 }

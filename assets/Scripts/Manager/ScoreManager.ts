@@ -30,9 +30,7 @@ export class ScoreManager extends Component {
   protected onLoad(): void {
     ScoreManager.instance = this;
     this.loadBestScore();
-  }
 
-  protected start(): void {
     // 监听水果合成事件，合成时加分
     GameEvents.on(GameEvent.FRUIT_MERGE, this.onFruitMerge, this);
 
@@ -53,7 +51,8 @@ export class ScoreManager extends Component {
 
   /** 水果合成时加分 —— 按新等级对应的分数加分 */
   private onFruitMerge(fruitA: any, _fruitB: any): void {
-    const newLevel = fruitA.level + 1;
+    // fruitA.level 已被 FruitManager.onFruitMerge 中 upgradeLevel() 升级为新等级
+    const newLevel = fruitA.level;
     if (newLevel <= GameConfig.MAX_LEVEL) {
       const config = GameConfig.FRUIT_TYPES[newLevel];
       this.addScore(config.score);

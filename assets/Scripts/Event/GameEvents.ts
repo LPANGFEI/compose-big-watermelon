@@ -5,7 +5,7 @@ import { EventTarget } from "cc";
  * 各模块通过事件通信，避免循环依赖。
  *
  * 数据流：
- *   Components/Touch.ts → RAW_TOUCH_* → TouchManager → TOUCH_* → FruitManager
+ *   TouchManager → TOUCH_* → FruitManager
  *   Fruit.ts → FRUIT_MERGE → FruitManager + ScoreManager
  *   DeathLine → GAME_OVER → GameManager + GamePage
  *
@@ -36,22 +36,13 @@ export enum GameEvent {
 
   // ========== 触摸事件 ==========
 
-  /** 原始触摸开始（Touch.ts → TouchManager，内部使用，外部勿监听） */
-  RAW_TOUCH_START = "RAW_TOUCH_START",
-
-  /** 原始触摸移动（内部使用） */
-  RAW_TOUCH_MOVE = "RAW_TOUCH_MOVE",
-
-  /** 原始触摸结束（内部使用） */
-  RAW_TOUCH_END = "RAW_TOUCH_END",
-
-  /** 触摸开始（TouchManager 过滤后广播，业务层监听此事件） */
+  /** 触摸开始（TouchManager 捕获后广播，业务层监听此事件） */
   TOUCH_START = "TOUCH_START",
 
-  /** 触摸移动（TouchManager 过滤后广播） */
+  /** 触摸移动 */
   TOUCH_MOVE = "TOUCH_MOVE",
 
-  /** 触摸结束（TouchManager 过滤后广播） */
+  /** 触摸结束 */
   TOUCH_END = "TOUCH_END",
 
   // ========== 水果逻辑 ==========

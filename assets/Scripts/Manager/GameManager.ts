@@ -1,4 +1,5 @@
 import { _decorator, Component, director, Node } from "cc";
+import { GameConfig } from "../Config/GameConfig";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
 
 const { ccclass, property } = _decorator;
@@ -20,22 +21,18 @@ const { ccclass, property } = _decorator;
 export class GameManager extends Component {
   static instance: GameManager;
 
-  /** 首页场景名 */
-  private static readonly HOME_SCENE = "Home";
-
-  /** 游戏场景名 */
-  private static readonly GAME_SCENE = "Game";
-
   /** 当前游戏是否进行中 */
   private isPlaying: boolean = false;
 
   protected onLoad(): void {
     GameManager.instance = this;
-    // 跨场景持久化
+    // 跨场景持久化 — 确保节点是场景根节点
+    const scene = director.getScene();
+    if (this.node.parent && scene && this.node.parent !== scene) {
+      this.node.removeFromParent();
+    }
     director.addPersistRootNode(this.node);
-  }
 
-  protected start(): void {
     // 监听生命周期事件
     GameEvents.on(GameEvent.START_GAME, this.onStartGame, this);
     GameEvents.on(GameEvent.RESTART_GAME, this.onRestartGame, this);
@@ -46,13 +43,13 @@ export class GameManager extends Component {
   /** 开始游戏 → 切换到游戏场景 */
   private onStartGame(): void {
     this.isPlaying = true;
-    director.loadScene(GameManager.GAME_SCENE);
+    director.loadScene(GameConfig.SCENE_NAME.GAME_SCENE);
   }
 
   /** 重新开始 → 重载当前场景，重置所有状态 */
   private onRestartGame(): void {
     this.isPlaying = true;
-    director.loadScene(GameManager.GAME_SCENE);
+    director.loadScene(GameConfig.SCENE_NAME.GAME_SCENE);
   }
 
   /** 游戏结束 → 标记为未进行 */
@@ -63,7 +60,7 @@ export class GameManager extends Component {
   /** 返回首页 */
   private onReturnHome(): void {
     this.isPlaying = false;
-    director.loadScene(GameManager.HOME_SCENE);
+    director.loadScene(GameConfig.SCENE_NAME.HOME_SCENE);
   }
 
   /** 当前是否游戏中 */
