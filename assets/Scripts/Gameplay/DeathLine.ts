@@ -1,3 +1,4 @@
+import { GameEvent, GameEvents } from "../Event/GameEvents";
 import {
   _decorator,
   Collider2D,
@@ -5,7 +6,6 @@ import {
   Contact2DType,
   IPhysics2DContact,
 } from "cc";
-import { GameEvent, GameEvents } from "../Event/GameEvents";
 
 const { ccclass } = _decorator;
 
@@ -16,11 +16,13 @@ const { ccclass } = _decorator;
  */
 @ccclass("DeathLine")
 export class DeathLine extends Component {
+  private isGameOver: boolean = false;
+
   protected onLoad(): void {
     this.registerCollision();
   }
 
-  /** 注册碰撞回调 */
+  /** 注册死亡线碰撞事件 */
   private registerCollision(): void {
     const collider = this.getComponent(Collider2D);
     if (!collider) return;
@@ -28,12 +30,14 @@ export class DeathLine extends Component {
     collider.on(Contact2DType.BEGIN_CONTACT, this.onContact, this);
   }
 
-  /** 有物体碰到死亡线 → 游戏结束 */
+  /** 死亡线碰撞事件处理 */
   private onContact(
     selfCollider: Collider2D,
     otherCollider: Collider2D,
     contact: IPhysics2DContact | null,
   ): void {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
     GameEvents.emit(GameEvent.GAME_OVER);
   }
 

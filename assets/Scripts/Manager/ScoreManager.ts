@@ -19,9 +19,10 @@ export class ScoreManager {
   /** 历史最高分 */
   private bestScore: number = 0;
 
+  /** 是否已初始化 */
   private initialized = false;
 
-  /** 初始化：加载最高分，监听合成事件（幂等） */
+  /** 初始化：加载最高分，通知 UI 初始状态（幂等） */
   init(): void {
     if (this.initialized) return;
     this.initialized = true;
@@ -58,12 +59,6 @@ export class ScoreManager {
       this.saveBestScore();
     }
 
-    GameEvents.emit(GameEvent.SCORE_UPDATED, this.currentScore, this.bestScore);
-  }
-
-  /** 重置当前分数（新一局开始时调用） */
-  resetScore(): void {
-    this.currentScore = 0;
     GameEvents.emit(GameEvent.SCORE_UPDATED, this.currentScore, this.bestScore);
   }
 

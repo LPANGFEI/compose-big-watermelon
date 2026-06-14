@@ -30,10 +30,8 @@ export class HomePage extends Component {
     GameEvents.emit(GameEvent.START_GAME);
   }
 
-  /** 点击"退出游戏"按钮 */
+  /** 仅对 window.open() 打开的窗口有效，浏览器中无法真正关闭页面 */
   onExitGame(): void {
-    // Cocos Creator 3.x 中 director.end() 已废弃，
-    // Web 平台通过关闭标签页退出，原生平台通过平台 API
     if (typeof window !== "undefined") {
       window.close();
     }

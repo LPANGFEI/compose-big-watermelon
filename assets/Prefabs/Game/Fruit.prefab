@@ -165,7 +165,7 @@
     "_group": 1,
     "_type": 2,
     "_allowSleep": true,
-    "_gravityScale": 1,
+    "_gravityScale": 1.5,
     "_linearDamping": 0,
     "_angularDamping": 0,
     "_linearVelocity": {
@@ -197,8 +197,8 @@
     "_group": 1,
     "_density": 1,
     "_sensor": false,
-    "_friction": 0.2,
-    "_restitution": 0,
+    "_friction": 0.7,
+    "_restitution": 0.2,
     "_offset": {
       "__type__": "cc.Vec2",
       "x": 0,
@@ -224,6 +224,13 @@
       "__id__": 11
     },
     "level": 0,
+    "fruitSprite": {
+      "__id__": 4
+    },
+    "fruitAtlas": {
+      "__uuid__": "931d16d6-9ce2-4157-b048-69de1466fab9",
+      "__expectedType__": "cc.SpriteAtlas"
+    },
     "_id": ""
   },
   {

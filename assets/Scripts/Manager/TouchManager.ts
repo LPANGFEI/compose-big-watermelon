@@ -38,12 +38,12 @@ export class TouchManager {
     this.initialized = false;
   }
 
-  /** 启用触摸 -- 暂时没用到 */
+  /** @internal 暂停功能预留 */
   enableTouch(): void {
     this.touchEnabled = true;
   }
 
-  /** 禁用触摸 -- 暂时没用到 */
+  /** @internal 暂停功能预留 */
   disableTouch(): void {
     this.touchEnabled = false;
   }
