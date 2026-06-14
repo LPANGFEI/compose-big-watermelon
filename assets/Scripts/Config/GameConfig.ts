@@ -10,11 +10,17 @@ export const GameConfig = {
     GAME_SCENE: "Game",
   },
 
+  /** 最高分 localStorage 存储 key */
+  BEST_SCORE_KEY: "bestScore",
+
   /** 水果生成间隔（秒） */
   SPAWN_INTERVAL: 1,
 
   /** 水果生成 Y 坐标（屏幕顶部） */
   SPAWN_POSITION_OFFSET: 200,
+
+  /** 水果生成 Y 坐标备用值（当死亡线节点不存在时） */
+  SPAWN_POSITION_Y_FALLBACK: 300,
 
   /** 水果生成 X 坐标范围 */
   SPAWN_POSITION_X_MIN: -320,

@@ -23,9 +23,10 @@ assets/
 ├── Scenes/           # 场景 (Home, Game)
 ├── Animations/       # 动画
 └── Scripts/
-    ├── Config/       # 全局常量 (GameConfig.ts)
-    ├── Event/        # 事件总线 + 枚举 (GameEvents.ts)
-    ├── Manager/      # 全局单例管理器
+    ├── Boot.ts         # 启动入口（初始化纯 TS 单例）
+    ├── Config/         # 全局常量 (GameConfig.ts)
+    ├── Event/          # 事件总线 + 枚举 (GameEvents.ts)
+    ├── Manager/        # 全局单例管理器
     │   ├── GameManager.ts    # 生命周期
     │   ├── FruitManager.ts   # 水果生成/合成
     │   ├── ScoreManager.ts   # 分数 + 持久化
@@ -39,11 +40,15 @@ assets/
 **Manager 派架构** — 逻辑集中在 Manager 单例，通过事件总线通信。
 
 ```
-Touch.ts → TouchManager → FruitManager
+TouchManager → TOUCH_* → FruitManager
 Fruit.ts → FRUIT_MERGE → FruitManager + ScoreManager
-DeathLine → GAME_OVER → GameManager
-ScoreManager → SCORE_UPDATED → UI 层
-UI 层 → START_GAME / RESTART_GAME → GameManager
+DeathLine → GAME_OVER → GameManager + GamePage
+ScoreManager → SCORE_UPDATED → HomePage / GamePage
+UI 按钮 → START_GAME / RESTART_GAME / RETURN_HOME → GameManager
 ```
 
-**核心规则**：Components / Gameplay / UI 层不 import Manager，只通过 GameEvents 事件通信。
+**单例模式**：
+- **纯 TS 单例**：GameManager / ScoreManager / TouchManager（无 Component 依赖，`init()` 幂等初始化）
+- **Component 单例**：FruitManager（需要编辑器绑定预制体和节点引用）
+
+**核心规则**：Gameplay / UI 层不 import Manager，只通过 GameEvents 事件通信。

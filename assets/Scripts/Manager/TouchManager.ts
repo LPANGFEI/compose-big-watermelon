@@ -1,37 +1,39 @@
-import { _decorator, Component, EventTouch, Node } from "cc";
+import { input, Input, EventTouch } from "cc";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
 
-const { ccclass } = _decorator;
-
 /**
- * 触摸管理器（单例 Component）
+ * 触摸管理器（纯 TS 单例）
  *
  * 职责：
- *   1. 直接捕获 Canvas 上的原生触摸事件
+ *   1. 捕获全局触摸事件
  *   2. 统一控制触摸开关（暂停时禁用，继续时恢复）
- *   3. 向 GameManager / FruitManager 转发触摸数据
- *
- * 挂在场景持久化节点上，跨场景存活。
+ *   3. 向 FruitManager 转发触摸数据
  */
-@ccclass("TouchManager")
-export class TouchManager extends Component {
-  static instance: TouchManager;
+export class TouchManager {
+  static instance = new TouchManager();
+  private constructor() {}
 
   /** 触摸是否启用 */
   private touchEnabled: boolean = true;
 
-  protected onLoad(): void {
-    TouchManager.instance = this;
-    // 节点已有 720×1280 的 UITransform，直接捕获自身触摸即可覆盖全屏
-    this.node.on(Node.EventType.TOUCH_START, this.onTouchStart, this);
-    this.node.on(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
-    this.node.on(Node.EventType.TOUCH_END, this.onTouchEnd, this);
+  private initialized = false;
+
+  /** 初始化：注册全局触摸监听（幂等） */
+  init(): void {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    input.on(Input.EventType.TOUCH_START, this.onTouchStart, this);
+    input.on(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
+    input.on(Input.EventType.TOUCH_END, this.onTouchEnd, this);
   }
 
-  protected onDestroy(): void {
-    this.node.off(Node.EventType.TOUCH_START, this.onTouchStart, this);
-    this.node.off(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
-    this.node.off(Node.EventType.TOUCH_END, this.onTouchEnd, this);
+  /** 移除事件监听 */
+  dispose(): void {
+    input.off(Input.EventType.TOUCH_START, this.onTouchStart, this);
+    input.off(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
+    input.off(Input.EventType.TOUCH_END, this.onTouchEnd, this);
+    this.initialized = false;
   }
 
   /** 启用触摸 */

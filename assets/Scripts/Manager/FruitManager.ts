@@ -17,7 +17,10 @@ import {
 const { ccclass, property } = _decorator;
 
 /**
- * 水果管理器（单例 Component）
+ * 水果管理器（Component 单例）
+ *
+ * 注意：此类为 Component 单例，依赖场景节点引用（@property），
+ *       通过 Cocos 生命周期 onLoad 自初始化，不由 Boot.init() 管理。
  *
  * 职责：
  *   1. 触摸时生成待生成水果（跟随手指移动）
@@ -124,35 +127,55 @@ export class FruitManager extends Component {
     if (!this.fruitPrefab) return;
 
     const clampedX = this.clampTouchX(event);
+    const spawnY = this.calculateSpawnY();
 
-    const spawnY = this.deathLineNode
+    const fruitNode = this.instantiateFruit(clampedX, spawnY);
+    this.configureRigidBody(fruitNode);
+    this.setRandomLevel(fruitNode);
+    this.showGuideLine(clampedX);
+
+    this.pendingFruit = fruitNode;
+  }
+
+  /** 计算生成 Y 坐标 */
+  private calculateSpawnY(): number {
+    return this.deathLineNode
       ? this.deathLineNode.position.y - GameConfig.SPAWN_POSITION_OFFSET
-      : 300;
+      : GameConfig.SPAWN_POSITION_Y_FALLBACK;
+  }
 
+  /** 实例化水果节点 */
+  private instantiateFruit(x: number, y: number): Node {
     const fruitNode = instantiate(this.fruitPrefab);
     fruitNode.parent = this.gameArea;
-    fruitNode.setPosition(new Vec3(clampedX, spawnY, 0));
+    fruitNode.setPosition(new Vec3(x, y, 0));
+    return fruitNode;
+  }
 
-    // Kinematic 刚体不受重力影响，触摸时可手动控制位置
+  /** 配置刚体为 Kinematic */
+  private configureRigidBody(fruitNode: Node): void {
     const rb = fruitNode.getComponent(RigidBody2D);
     if (rb) {
       rb.type = ERigidBody2DType.Kinematic;
       this.pendingRigidbody = rb;
     }
+  }
 
-    // 随机生成低级水果（0-3 级）
+  /** 设置随机等级（0-3 级） */
+  private setRandomLevel(fruitNode: Node): void {
     const randomLevel = Math.floor(Math.random() * 4);
     const fruitComp = fruitNode.getComponent(Fruit);
     if (fruitComp) {
       fruitComp.level = randomLevel;
     }
+  }
 
-    this.pendingFruit = fruitNode;
-
+  /** 显示引导线 */
+  private showGuideLine(x: number): void {
     if (this.guideLine) {
       this.guideLine.active = true;
       const guidePos = this.guideLine.getPosition();
-      this.guideLine.setPosition(new Vec3(clampedX, guidePos.y, guidePos.z));
+      this.guideLine.setPosition(new Vec3(x, guidePos.y, guidePos.z));
     }
   }
 

@@ -1,4 +1,10 @@
-import { _decorator, Component, Collider2D, Contact2DType, IPhysics2DContact } from "cc";
+import {
+  _decorator,
+  Collider2D,
+  Component,
+  Contact2DType,
+  IPhysics2DContact,
+} from "cc";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
 
 const { ccclass } = _decorator;
@@ -23,7 +29,11 @@ export class DeathLine extends Component {
   }
 
   /** 有物体碰到死亡线 → 游戏结束 */
-  private onContact(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
+  private onContact(
+    selfCollider: Collider2D,
+    otherCollider: Collider2D,
+    contact: IPhysics2DContact | null,
+  ): void {
     GameEvents.emit(GameEvent.GAME_OVER);
   }
 

@@ -1,6 +1,5 @@
 import { _decorator, Component, Label } from "cc";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
-import { GameManager } from "../Manager/GameManager";
 
 const { ccclass, property } = _decorator;
 
@@ -16,9 +15,6 @@ export class HomePage extends Component {
   bestScoreLabel: Label = null;
 
   protected onLoad(): void {
-    GameManager.instance.init();
-
-    // 监听分数更新 —— ScoreManager.start() 会主动广播
     GameEvents.on(GameEvent.SCORE_UPDATED, this.onScoreUpdated, this);
   }
 

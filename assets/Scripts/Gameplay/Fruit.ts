@@ -1,4 +1,10 @@
-import { _decorator, Component, Collider2D, Contact2DType, IPhysics2DContact } from "cc";
+import {
+  _decorator,
+  Collider2D,
+  Component,
+  Contact2DType,
+  IPhysics2DContact,
+} from "cc";
 import { GameConfig } from "../Config/GameConfig";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
 
@@ -33,7 +39,11 @@ export class Fruit extends Component {
   }
 
   /** 碰撞进入回调 —— 检测到同等级水果则触发合成 */
-  private onCollisionEnter(selfCollider: Collider2D, otherCollider: Collider2D, contact: IPhysics2DContact | null): void {
+  private onCollisionEnter(
+    selfCollider: Collider2D,
+    otherCollider: Collider2D,
+    contact: IPhysics2DContact | null,
+  ): void {
     if (this.isMerging) return;
 
     const otherFruit = otherCollider.node.getComponent(Fruit);
@@ -56,7 +66,7 @@ export class Fruit extends Component {
   }
 
   /** 获取当前等级对应的配置 */
-  getFruitConfig() {
+  getFruitConfig(): (typeof GameConfig.FRUIT_TYPES)[number] {
     return GameConfig.FRUIT_TYPES[this.level];
   }
 

@@ -1,26 +1,19 @@
-import { _decorator, Component, sys } from "cc";
 import { Fruit } from "../Gameplay/Fruit";
 import { GameConfig } from "../Config/GameConfig";
 import { GameEvent, GameEvents } from "../Event/GameEvents";
-
-const { ccclass } = _decorator;
-
-/** localStorage 存储 key */
-const BEST_SCORE_KEY = "bestScore";
+import { sys } from "cc";
 
 /**
- * 分数管理器（单例 Component）
+ * 分数管理器（纯 TS 单例）
  *
  * 职责：
  *   1. 管理当前游戏分数
  *   2. 读写最高分到 localStorage
  *   3. 通过事件通知 UI 更新
- *
- * 挂在场景持久化节点上，跨场景存活。
  */
-@ccclass("ScoreManager")
-export class ScoreManager extends Component {
-  static instance: ScoreManager;
+export class ScoreManager {
+  static instance = new ScoreManager();
+  private constructor() {}
 
   /** 当前分数 */
   private currentScore: number = 0;
@@ -28,26 +21,36 @@ export class ScoreManager extends Component {
   /** 历史最高分 */
   private bestScore: number = 0;
 
-  protected onLoad(): void {
-    ScoreManager.instance = this;
+  private initialized = false;
+
+  /** 初始化：加载最高分，监听合成事件（幂等） */
+  init(): void {
+    if (this.initialized) return;
+    this.initialized = true;
+
     this.loadBestScore();
-
-    // 监听水果合成事件，合成时加分
     GameEvents.on(GameEvent.FRUIT_MERGE, this.onFruitMerge, this);
-
-    // 初始化完成后主动广播当前分数，让 UI 层同步
     GameEvents.emit(GameEvent.SCORE_UPDATED, this.currentScore, this.bestScore);
+  }
+
+  /** 移除事件监听 */
+  dispose(): void {
+    GameEvents.off(GameEvent.FRUIT_MERGE, this.onFruitMerge, this);
+    this.initialized = false;
   }
 
   /** 从 localStorage 加载最高分 */
   private loadBestScore(): void {
-    const saved = sys.localStorage.getItem(BEST_SCORE_KEY);
+    const saved = sys.localStorage.getItem(GameConfig.BEST_SCORE_KEY);
     this.bestScore = saved ? parseInt(saved) : 0;
   }
 
   /** 保存最高分到 localStorage */
   private saveBestScore(): void {
-    sys.localStorage.setItem(BEST_SCORE_KEY, this.bestScore.toString());
+    sys.localStorage.setItem(
+      GameConfig.BEST_SCORE_KEY,
+      this.bestScore.toString(),
+    );
   }
 
   /** 水果合成时加分 —— 按新等级对应的分数加分 */
@@ -86,9 +89,5 @@ export class ScoreManager extends Component {
   /** 获取最高分 */
   getBestScore(): number {
     return this.bestScore;
-  }
-
-  protected onDestroy(): void {
-    GameEvents.off(GameEvent.FRUIT_MERGE, this.onFruitMerge, this);
   }
 }

@@ -18,6 +18,18 @@
 
 Manager 之间通过 `GameEvents` 事件通信，不直接 import。
 
+### Manager 目录结构
+
+Manager/ 均为单例，不拆分目录。按初始化方式分为两类：
+
+```
+Manager/
+├── GameManager.ts      # 纯 TS 单例 | Boot.init() 管理
+├── ScoreManager.ts     # 纯 TS 单例 | Boot.init() 管理
+├── TouchManager.ts     # 纯 TS 单例 | Boot.init() 管理
+└── FruitManager.ts     # Component 单例 | 场景 onLoad 自初始化
+```
+
 ### 数据流
 
 ```
@@ -39,13 +51,16 @@ GameEvents.on(GameEvent.XXX, this.handler, this);
 GameEvents.off(GameEvent.XXX, this.handler, this);
 ```
 
-纯 TS 单例（GameManager）：
+纯 TS 单例（GameManager / ScoreManager / TouchManager）：
 
 ```ts
-// init() 中注册，dispose() 中移除
+// 在 Boot.ts 的 onLoad 中初始化（幂等，多次调用安全）
 GameManager.instance.init();
-GameManager.instance.dispose();
+ScoreManager.instance.init();
+TouchManager.instance.init();
 ```
+
+**启动流程**：Boot.ts 挂在 Home 场景 Canvas 节点上，负责初始化所有纯 TS 单例。
 
 ## 命名规范
 
@@ -59,30 +74,37 @@ GameManager.instance.dispose();
 
 ## Manager 单例模式
 
-**Component 类（FruitManager / ScoreManager / TouchManager）：**
+**纯 TS 单例（GameManager / ScoreManager / TouchManager）：**
 
 ```ts
-@ccclass("XxxManager")
-export class XxxManager extends Component {
-  static instance: XxxManager;
+export class XxxManager {
+  static instance = new XxxManager();
+  private constructor() {}
+  private initialized = false;
+  // 幂等 init，在 Boot.ts 的 onLoad 中调用
+  init(): void {
+    if (this.initialized) return;
+    this.initialized = true;
+    // 注册事件监听
+  }
+  dispose(): void { /* 移除事件监听 */ }
+}
+```
+
+**Component 单例（FruitManager）：**
+
+```ts
+@ccclass("FruitManager")
+export class FruitManager extends Component {
+  static instance: FruitManager;
   protected onLoad(): void {
-    XxxManager.instance = this;
+    FruitManager.instance = this;
+    // 编辑器绑定的 @property 在此使用
   }
 }
 ```
 
-**纯 TS 单例（GameManager）：**
-
-```ts
-export class GameManager {
-  static instance = new GameManager();
-  private constructor() {}
-  // 幂等 init，在 HomePage.onLoad() 中调用
-  init(): void { ... }
-}
-```
-
-GameManager 不再依赖场景节点，无需 persistRootNode。HomePage.onLoad() 中调用 `GameManager.instance.init()` 完成初始化。
+纯 TS 单例无 Component 依赖，通过 `init()` 幂等初始化。Boot.ts 挂在 Home 场景 Canvas 节点上统一初始化。
 
 ## 常用命令
 
